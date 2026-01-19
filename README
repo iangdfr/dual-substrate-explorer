@@ -1,0 +1,97 @@
+===============================================================================
+                      SUBSTRATE SUCCESSION ENGINE (v6.9.0)
+===============================================================================
+
+LICENSE: MIT
+VERSION: 6.9.0
+BUILD DATE: January 20, 2026
+REPOSITORY: github.com/[your-username]/substrate-succession-engine
+
+-------------------------------------------------------------------------------
+1. OVERVIEW
+-------------------------------------------------------------------------------
+The Substrate Succession Engine is an open-source interactive simulator 
+designed to model long-run demographic transitions through the lens of 
+Lineage Persistence and Institutional Continuity.
+
+Unlike standard population clocks, this tool focuses on the "Succession Event"
+- the mathematical point at which a heritage substrate is replaced by a 
+successor substrate due to the interplay of fertility variance, resource 
+scarcity, and legacy debt servicing.
+
+-------------------------------------------------------------------------------
+2. CORE FEATURES
+-------------------------------------------------------------------------------
+* DUAL-SUBSTRATE MODELING: 
+  Tracks "Heritage" vs. "Successor" lineages across 8 generations.
+
+* PSI (PSI) THRESHOLD TOGGLE: 
+  Switch between 2.1 (Deterministic) replacement and 2.7 (Stochastic) 
+  persistence floors to account for biological and cultural variance.
+
+* SUCCESSION MATRIX: 
+  Adjust variables for Axiological Exhaustion, Resource Scarcity, and 
+  Wealth Concentration to see how they starve reproductive capital.
+
+* FISCAL DRAG & EXIT TRIGGERS: 
+  Models the Hirschmanian "Exit" - the point at which high debt and low 
+  social trust lead to institutional breakdown.
+
+* SHAREABLE SCENARIOS: 
+  One-click Base64 URL export to share specific demographic "Death Spirals" 
+  or "Convergence" paths via unique links.
+
+-------------------------------------------------------------------------------
+3. METHODOLOGY & MATHEMATICS
+-------------------------------------------------------------------------------
+The engine utilizes a modified Galton-Watson Branching Process to calculate 
+lineage decay. The primary continuity formula is:
+
+H(n+1) = H(n) * ((TFR_initial * (1 - SUM AEI_adj)) / PSI)
+
+Where:
+- H(n):     Heritage volume at generation n.
+- AEI_adj:  Axiological Exhaustion Index, adjusted for resource scarcity 
+            and wealth barriers.
+- PSI:      The persistence floor (Default: 2.1 or 2.7).
+
+Social Trust is modeled as a function of the Substrate Crossover Index (SCI), 
+where high friction and low convergence (lambda) accelerate the 
+"Institutional Exit" flag.
+
+-------------------------------------------------------------------------------
+4. QUICK-LOAD PRESETS
+-------------------------------------------------------------------------------
+- STOCHASTIC COLLAPSE: 
+  High scarcity and wealth concentration lead to a rapid heritage exit.
+- HIGH INTEGRATION: 
+  High convergence (lambda) maintains institutional complexity despite 
+  substrate transition.
+- INSTITUTIONAL EXIT: 
+  High debt and low trust trigger a "systemic reset" indicator.
+- CONTINUITY: 
+  Optimized settings for long-term lineage persistence.
+
+-------------------------------------------------------------------------------
+5. DATA BASELINES (2026 REGISTRY)
+-------------------------------------------------------------------------------
+Pre-loaded data for 11 major jurisdictions (USA, CAN, AUS, JPN, ISR, etc.) 
+uses 2024-2026 proxies from:
+- UN World Population Prospects (2024 Revision)
+- IMF Fiscal Monitor (2025/26 Estimates)
+- World Bank Human Capital Index (2025 Update)
+
+-------------------------------------------------------------------------------
+6. DISCLAIMER
+-------------------------------------------------------------------------------
+This is an EXPLORATORY MODELING TOOL. It is intended for "What-If" scenario 
+analysis and counterfactual history exploration. It is NOT a predictive 
+forecast or a policy recommendation. Results are strictly a product of 
+user-defined input assumptions.
+
+-------------------------------------------------------------------------------
+7. LICENSE
+-------------------------------------------------------------------------------
+Distributed under the MIT License.
+Copyright (c) 2026 Substrate Succession Engine
+===============================================================================
