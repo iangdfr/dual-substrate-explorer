@@ -155,8 +155,11 @@ let chart;
 
 function showToast(msg) {
     const x = document.getElementById("toast");
-    x.innerText = msg; x.className = "show";
-    setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+    if (x) {
+        x.innerText = msg;
+        x.className = "show";
+        setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+    }
 }
 
 function applyPreset(type) {
@@ -166,9 +169,13 @@ function applyPreset(type) {
         exit: { aei: 0.5, scar: 0.6, wealth: 0.7, mig: 0.8, conv: 0.2, debt: 220 },
         stable: { aei: 0.1, scar: 0.05, wealth: 0.2, mig: 0.1, conv: 0.8, debt: 30 }
     }[type];
-    Object.keys(p).forEach(k => document.getElementById(k+'-s').value = p[k]);
+    Object.keys(p).forEach(k => {
+        const slider = document.getElementById(k+'-s');
+        if (slider) slider.value = p[k];
+    });
     document.querySelectorAll('.s-btn').forEach(b => b.classList.remove('active-preset'));
-    if(document.getElementById('p-'+type)) document.getElementById('p-'+type).classList.add('active-preset');
+    const targetBtn = document.getElementById('p-'+type);
+    if(targetBtn) targetBtn.classList.add('active-preset');
     update();
 }
 
@@ -183,7 +190,7 @@ function update() {
     const sel = document.getElementById('country-select');
     const c = registry[sel.value];
     
-    // Fix: Show Full Country Name
+    // UI Fix: Full Name Display
     document.getElementById('country-display').innerText = sel.options[sel.selectedIndex].text;
 
     const i = {
@@ -195,10 +202,11 @@ function update() {
         debt: parseFloat(document.getElementById('debt-s').value)
     };
 
-    // Accessibility & Value Labels
+    // UI Updates
     ['aei','scar','wealth','mig','conv','debt'].forEach(k => {
         const val = document.getElementById(k+'-s').value;
-        document.getElementById(k+'-v').innerText = (k === 'debt' ? val : Math.round(val*100)) + '%';
+        const badge = document.getElementById(k+'-v');
+        if (badge) badge.innerText = (k === 'debt' ? val : Math.round(val*100)) + '%';
         document.getElementById(k+'-s').setAttribute('aria-valuenow', k === 'debt' ? val : Math.round(val*100));
     });
 
@@ -215,7 +223,10 @@ function update() {
     document.getElementById('exit-status').innerText = fDrag > 4.5 ? "EXIT: ACTIVE" : "EXIT: NONE";
     document.getElementById('gsp-val').innerText = (hP[8]*100).toFixed(1) + "%";
     document.getElementById('replace-ratio').innerText = (sP[8]/(hP[8]+0.01)).toFixed(1) + "x";
-    document.getElementById('shift-status').innerText = crossover > -1 ? `CROSSOVER: GEN ${crossover}` : "STABLE SUBSTRATE";
+    
+    const status = document.getElementById('shift-status');
+    status.innerText = crossover > -1 ? `CROSSOVER: GEN ${crossover}` : "STABLE SUBSTRATE";
+    status.style.color = crossover > -1 ? 'var(--danger)' : 'var(--safe)';
     
     document.getElementById('trust-fill').style.width = Math.max(5, 100 - ( (1-i.conv)*60 + i.scar*20)) + '%';
     document.getElementById('comp-fill').style.width = Math.max(5, 100 - (i.debt/3.5)) + '%';
@@ -241,8 +252,8 @@ function init() {
         data: {
             labels: ['G0','G1','G2','G3','G4','G5','G6','G7','G8'],
             datasets: [
-                { label: 'Heritage', data: [], borderColor: '#00FF88', tension: 0.3, borderWidth: 4 },
-                { label: 'Successor', data: [], borderColor: '#FF9900', borderDash: [5,5], tension: 0.3, borderWidth: 3 }
+                { label: 'Heritage Substrate', data: [], borderColor: '#00FF88', tension: 0.3, borderWidth: 4, pointRadius: 0 },
+                { label: 'Successor Substrate', data: [], borderColor: '#FF9900', borderDash: [5,5], tension: 0.3, borderWidth: 3, pointRadius: 0 }
             ]
         },
         options: {
