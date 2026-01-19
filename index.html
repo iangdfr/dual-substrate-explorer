@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual-Substrate Population Explorer v6.9</title>
+    
+    <meta name="description" content="Open-source interactive simulator for long-run population dynamics, fertility, migration, fiscal continuity, and stochastic extinction risk.">
+    <meta property="og:title" content="Dual-Substrate Population Explorer">
+    <meta property="og:description" content="Model heritage vs successor trajectories, institutional exit thresholds, and policy counterfactuals using UN/OECD baselines.">
+    <meta property="og:type" content="website">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📉</text></svg>">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root { 
+            --danger: #FF3333; --warning: #FFFF00; --safe: #00FF88; 
+            --successor: #FF9900; --bg: #000000; --panel: #111; 
+            --text: #FFFFFF; --accent: #00FFFF; --money: #00FF88;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 20px; font-size: 14px; line-height: 1.5; }
+        .terminal-wrapper { max-width: 1700px; margin: auto; display: grid; grid-template-columns: 420px 1fr; gap: 25px; }
+        @media (max-width: 1200px) { .terminal-wrapper { grid-template-columns: 1fr; } }
+        
+        .panel { background: var(--panel); border: 2px solid #333; padding: 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .card { background: #000; border: 1px solid #444; padding: 15px; margin-bottom: 15px; border-radius: 6px; }
+        .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .label { font-size: 0.7rem; color: var(--accent); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 900; }
+        .val-badge { font-family: monospace; color: #FFF; font-size: 0.85rem; background: #222; padding: 2px 6px; border-radius: 3px; }
+        
+        input[type=range] { width: 100%; height: 8px; border-radius: 5px; background: #333; outline: none; margin: 10px 0; -webkit-appearance: none; cursor: pointer; }
+        input[type=range]::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--accent) 0%, var(--warning) 50%, var(--danger) 100%); height: 8px; border-radius: 5px; }
+        input[type=range]::-webkit-slider-thumb { height: 20px; width: 10px; background: #FFF; cursor: pointer; -webkit-appearance: none; margin-top: -6px; border-radius: 2px; }
+
+        .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
+        .t-btn { flex: 1; padding: 12px; background: #222; border: 1px solid #444; color: #888; cursor: pointer; font-weight: 900; font-size: 0.75rem; border-radius: 4px; transition: 0.2s; }
+        .t-btn.active { border-color: var(--safe); color: var(--safe); background: #051a05; box-shadow: 0 0 15px rgba(0,255,136,0.2); }
+        
+        .scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .s-btn { background: #111; border: 1px solid #333; color: #aaa; padding: 10px; font-size: 0.7rem; cursor: pointer; font-weight: bold; border-radius: 4px; }
+        .s-btn.active-preset { border-color: var(--accent); background: #002222; color: #fff; }
+
+        .meter { height: 12px; background: #222; margin: 10px 0; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
+        .meter-fill { height: 100%; transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        .export-btn { margin-top: 10px; width: 100%; padding: 12px; background: #222; border: 1px solid var(--accent); color: var(--accent); font-weight: 900; cursor: pointer; border-radius: 6px; text-transform: uppercase; font-size: 0.7rem; }
+        .export-btn:hover { background: var(--accent); color: #000; }
+
+        #toast { visibility: hidden; min-width: 250px; background-color: var(--accent); color: #000; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
+</head>
+<body>
+
+<div id="toast">LINK COPIED TO CLIPBOARD</div>
+
+<div class="terminal-wrapper">
+    <aside class="panel">
+        <div class="label">Geopolitical Registry</div>
+        <select id="country-select" onchange="update()" aria-label="Select Country Context"></select>
+
+        <div class="label">Scenario Quick-Load</div>
+        <div class="scenario-grid">
+            <button class="s-btn" id="p-collapse" onclick="applyPreset('collapse')" data-preset="collapse">Stochastic Collapse</button>
+            <button class="s-btn" id="p-conv" onclick="applyPreset('convergence')" data-preset="convergence">High Integration</button>
+            <button class="s-btn" id="p-exit" onclick="applyPreset('exit')" data-preset="exit">Institutional Exit</button>
+            <button class="s-btn" id="p-stable" onclick="applyPreset('stable')" data-preset="stable">Continuity</button>
+        </div>
+
+        <div class="label">Succession Threshold ($\psi$)</div>
+        <div class="btn-group">
+            <button class="t-btn active" id="t21" onclick="setThreshold(2.1)">2.1 (Deterministic)</button>
+            <button class="t-btn" id="t27" onclick="setThreshold(2.7)">2.7 (Stochastic)</button>
+        </div>
+
+        <div class="label">Substrate Exhaustion Matrix</div>
+        <div class="card">
+            <div class="label-row"><span class="label">Axiological Exhaustion</span><span id="aei-v" class="val-badge">0%</span></div>
+            <input type="range" id="aei-s" min="0" max="1" step="0.05" value="0.3" oninput="update()" aria-label="Axiological Exhaustion">
+            
+            <div class="label-row"><span class="label">Resource Scarcity</span><span id="scar-v" class="val-badge">0%</span></div>
+            <input type="range" id="scar-s" min="0" max="1" step="0.05" value="0.2" oninput="update()" aria-label="Resource Scarcity">
+            
+            <div class="label-row"><span class="label">Wealth Concentration</span><span id="wealth-v" class="val-badge">0%</span></div>
+            <input type="range" id="wealth-s" min="0.1" max="0.9" step="0.05" value="0.4" oninput="update()" aria-label="Wealth Concentration">
+        </div>
+
+        <div class="label">Systemic Levers</div>
+        <div class="card">
+            <div class="label-row"><span class="label">Migration Intensity</span><span id="mig-v" class="val-badge">0%</span></div>
+            <input type="range" id="mig-s" min="0" max="1" step="0.05" value="0.5" oninput="update()" aria-label="Migration Intensity">
+            
+            <div class="label-row"><span class="label">Convergence (λ)</span><span id="conv-v" class="val-badge">0%</span></div>
+            <input type="range" id="conv-s" min="0" max="1" step="0.05" value="0.5" oninput="update()" aria-label="Convergence">
+            
+            <div class="label-row"><span class="label">Legacy Debt (% GDP)</span><span id="debt-v" class="val-badge">0%</span></div>
+            <input type="range" id="debt-s" min="0" max="300" step="5" value="80" oninput="update()" aria-label="Legacy Debt">
+        </div>
+
+        <button id="export-btn" class="export-btn">Share Scenario (URL)</button>
+        <button id="copy-results-btn" class="export-btn" style="background:#111; border-color:#555;">Copy Results Summary</button>
+    </aside>
+
+    <main class="panel">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+            <div>
+                <h1 id="country-display" style="margin:0; font-size:3rem; letter-spacing:-2px; line-height:1;">USA</h1>
+                <div style="display:flex; align-items:center; margin-top:5px;">
+                    <div id="shift-status" style="font-weight:900; text-transform:uppercase; font-size:0.85rem;">STABLE SUBSTRATE</div>
+                </div>
+            </div>
+            <div style="text-align:right;">
+                <div class="label">Heritage Persistence (G8)</div>
+                <div id="gsp-val" style="font-size:3rem; font-weight:900;">--%</div>
+            </div>
+        </div>
+
+        <div style="position:relative; height: 440px; margin-top: 20px;">
+            <canvas id="mainChart"></canvas>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 25px;">
+            <div class="card" style="text-align:center;">
+                <div class="label">Friction Drag</div>
+                <div id="friction-val" style="font-size:2rem; font-weight:900;">0.0%</div>
+                <div id="exit-status" style="font-size:0.75rem; font-weight:900; margin-top:5px;">EXIT: NONE</div>
+            </div>
+            <div class="card">
+                <div class="label-row"><span class="label">Social Trust</span><span id="trust-v-label" style="font-weight:900;">100%</span></div>
+                <div class="meter"><div id="trust-fill" class="meter-fill"></div></div>
+                <div class="label-row" style="margin-top:10px;"><span class="label">Complexity</span><span id="comp-v-label" style="font-weight:900;">100%</span></div>
+                <div class="meter"><div id="comp-fill" class="meter-fill"></div></div>
+            </div>
+            <div class="card" style="text-align:center;">
+                <div class="label">Replace Ratio (G8)</div>
+                <div id="replace-ratio-label" style="font-size:1.8rem; font-weight:900; color:var(--successor);">0x</div>
+                <div id="payback-val" style="font-size:0.75rem; font-weight:bold; margin-top:5px;">Horizon: N/A</div>
+            </div>
+        </div>
+
+        <div style="margin-top:20px; text-align:center;">
+            <p style="font-size:0.75rem; color:#666;">
+                $$H_{n+1} = H_n \cdot \left( \frac{TFR_{initial} \cdot (1 - \Sigma AEI_{adj})}{\psi} \right) \quad | \quad \psi \in \{2.1, 2.7\}$$
+            </p>
+        </div>
+    </main>
+</div>
+
+<footer style="text-align:center; color:#444; font-size:0.7rem; margin-top:30px; padding-bottom: 20px;">
+    MIT License | &copy; 2026 Dual-Substrate Explorer | Build v6.9.0-Final
+</footer>
+
+<script>
+/** DUAL-SUBSTRATE ENGINE CORE v6.9.0 **/
+let currentThreshold = 2.1;
+let currentPreset = 'stable';
+const registry = {
+    "AUS": { tfr: 1.42, mig: 0.55, coh: 0.70, debt: 45 },
+    "CAN": { tfr: 1.28, mig: 0.80, coh: 0.65, debt: 107 },
+    "CHN": { tfr: 1.00, mig: 0.01, coh: 0.88, debt: 90 },
+    "FRA": { tfr: 1.56, mig: 0.42, coh: 0.69, debt: 112 },
+    "GER": { tfr: 1.45, mig: 0.55, coh: 0.68, debt: 65 },
+    "ISR": { tfr: 2.91, mig: 0.05, coh: 0.89, debt: 62 },
+    "ITA": { tfr: 1.21, mig: 0.40, coh: 0.72, debt: 140 },
+    "JPN": { tfr: 1.25, mig: 0.02, coh: 0.84, debt: 260 },
+    "KOR": { tfr: 0.72, mig: 0.03, coh: 0.45, debt: 55 },
+    "UK":  { tfr: 1.52, mig: 0.52, coh: 0.68, debt: 102 },
+    "USA": { tfr: 1.58, mig: 0.55, coh: 0.72, debt: 125 }
+};
+
+let chart;
+
+function showToast(msg) {
+    const x = document.getElementById("toast");
+    x.innerText = msg;
+    x.className = "show";
+    setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+}
+
+function applyPreset(type) {
+    const p = {
+        collapse: { aei: 0.8, scar: 0.7, wealth: 0.8, mig: 0.2, conv: 0.4, debt: 160 },
+        convergence: { aei: 0.2, scar: 0.1, wealth: 0.3, mig: 0.5, conv: 0.85, debt: 50 },
+        exit: { aei: 0.5, scar: 0.6, wealth: 0.7, mig: 0.8, conv: 0.2, debt: 220 },
+        stable: { aei: 0.1, scar: 0.05, wealth: 0.2, mig: 0.1, conv: 0.8, debt: 30 }
+    }[type];
+    Object.keys(p).forEach(k => document.getElementById(k+'-s').value = p[k]);
+    currentPreset = type;
+    update();
+}
+
+function setThreshold(val) {
+    currentThreshold = val;
+    document.getElementById('t21').classList.toggle('active', val === 2.1);
+    document.getElementById('t27').classList.toggle('active', val === 2.7);
+    update();
+}
+
+function update() {
+    const i = {
+        aei: parseFloat(document.getElementById('aei-s').value),
+        scar: parseFloat(document.getElementById('scar-s').value),
+        wealth: parseFloat(document.getElementById('wealth-s').value),
+        mig: parseFloat(document.getElementById('mig-s').value),
+        conv: parseFloat(document.getElementById('conv-s').value),
+        debt: parseFloat(document.getElementById('debt-s').value)
+    };
+    const c = registry[document.getElementById('country-select').value];
+
+    // Accessibility & UI updates
+    Object.keys(i).forEach(k => {
+        const displayVal = (k === 'debt' ? i[k] : Math.round(i[k]*100));
+        document.getElementById(k+'-v').innerText = displayVal + (k === 'debt' ? '%' : '%');
+        document.getElementById(k+'-s').setAttribute('aria-valuenow', displayVal);
+    });
+    
+    document.querySelectorAll('.s-btn').forEach(b => b.classList.remove('active-preset'));
+    if(document.getElementById('p-'+currentPreset)) document.getElementById('p-'+currentPreset).classList.add('active-preset');
+
+    // Model Logic
+    const tAEI = Math.min(1.0, i.aei + (i.scar * 0.4));
+    const hTFR = Math.max(0.1, c.tfr * (1 - (tAEI * 0.5)) * (1 - (i.wealth * 0.4)));
+    const hSCI = (hTFR / currentThreshold) * c.coh;
+    const sTFR = 2.4 * (1 - (tAEI * 0.3)); 
+
+    let hP = [1.0], sP = [0.0], tP = [1.0], cross = -1;
+    for(let j=1; j<=8; j++) {
+        hP.push(hP[j-1] * hSCI);
+        sP.push((sP[j-1] * (sTFR/currentThreshold)) + (c.mig * i.mig));
+        tP.push(hP[j] + sP[j]);
+        if(cross === -1 && sP[j] > hP[j]) cross = j;
+    }
+
+    const trust = Math.max(1, 100 - ( (sP[4]/(hP[4]+0.01)) * (1-i.conv) * 65 ));
+    const fDrag = (100 - trust) * 0.15 + (i.debt / 40) + (i.scar * 6) + (i.wealth * 8);
+    const comp = Math.max(10, 100 - ( (i.debt/300)*50 + (1-i.conv)*30 ));
+
+    // UI Finalize
+    document.getElementById('country-display').innerText = document.getElementById('country-select').value;
+    document.getElementById('gsp-val').innerText = (hP[8] * 100).toFixed(1) + "%";
+    document.getElementById('gsp-val').style.color = hSCI < 1 ? 'var(--danger)' : 'var(--safe)';
+    document.getElementById('shift-status').innerText = cross > -1 ? `CROSSOVER: GEN ${cross}` : "STABLE SUBSTRATE";
+    document.getElementById('shift-status').style.color = cross > -1 ? 'var(--danger)' : 'var(--safe)';
+    document.getElementById('friction-val').innerText = fDrag.toFixed(1) + "%";
+    document.getElementById('exit-status').innerText = fDrag > 4.5 ? "EXIT: ACTIVE" : "EXIT: NONE";
+    document.getElementById('exit-status').style.color = fDrag > 4.5 ? 'var(--danger)' : '#555';
+    document.getElementById('trust-fill').style.width = trust + "%";
+    document.getElementById('comp-fill').style.width = comp + "%";
+    document.getElementById('replace-ratio-label').innerText = (sP[8]/(hP[8]+0.001)).toFixed(1) + "x";
+    document.getElementById('payback-val').innerText = "Horizon: " + (fDrag > 4.5 ? "REDUCED" : "STABLE");
+
+    chart.data.datasets[0].data = hP;
+    chart.data.datasets[1].data = sP;
+    chart.data.datasets[2].data = tP;
+    chart.update();
+}
+
+document.getElementById('export-btn').onclick = () => {
+    const s = {
+        c: document.getElementById('country-select').value,
+        t: currentThreshold,
+        a: parseFloat(document.getElementById('aei-s').value).toFixed(2),
+        sc: parseFloat(document.getElementById('scar-s').value).toFixed(2),
+        w: parseFloat(document.getElementById('wealth-s').value).toFixed(2),
+        m: parseFloat(document.getElementById('mig-s').value).toFixed(2),
+        v: parseFloat(document.getElementById('conv-s').value).toFixed(2),
+        d: parseInt(document.getElementById('debt-s').value),
+        p: currentPreset
+    };
+    navigator.clipboard.writeText(window.location.origin + window.location.pathname + '?s=' + btoa(JSON.stringify(s)));
+    showToast("SHORT-LINK COPIED");
+};
+
+document.getElementById('copy-results-btn').onclick = () => {
+    const res = `${document.getElementById('country-display').innerText} Analysis (Build 2026):\n` +
+                `Heritage G8: ${document.getElementById('gsp-val').innerText}\n` +
+                `Replace Ratio: ${document.getElementById('replace-ratio-label').innerText}\n` +
+                `Friction: ${document.getElementById('friction-val').innerText}\n` +
+                `Status: ${document.getElementById('shift-status').innerText}`;
+    navigator.clipboard.writeText(res);
+    showToast("RESULTS COPIED TO CLIPBOARD");
+};
+
+function init() {
+    console.log("Dual-Substrate Population Explorer v6.9 loaded");
+    const sel = document.getElementById('country-select');
+    Object.keys(registry).forEach(k => sel.add(new Option(k, k)));
+    sel.value = "USA";
+
+    chart = new Chart(document.getElementById('mainChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: ['G0','G1','G2','G3','G4','G5','G6','G7','G8'],
+            datasets: [
+                { label: 'Heritage', data: [], borderColor: '#00FF88', fill: true, backgroundColor: 'rgba(0,255,136,0.05)', tension: 0.3, borderWidth: 4 },
+                { label: 'Successor', data: [], borderColor: '#FF9900', borderDash: [8,4], tension: 0.3, borderWidth: 3 },
+                { label: 'Total Volume', data: [], borderColor: '#444', borderDash: [2,2], pointRadius: 0, tension: 0.2 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { 
+                legend: { 
+                    position: 'top',
+                    labels: { color: '#FFF', font: { size: 13, weight: '600' }, boxWidth: 20, padding: 20 } 
+                }, 
+                tooltip: { enabled: true } 
+            },
+            scales: { 
+                y: { 
+                    beginAtZero: true,
+                    suggestedMax: 1.5,
+                    ticks: { color: '#666' }, 
+                    grid: { color: '#222' } 
+                }, 
+                x: { ticks: { color: '#666' }, grid: { color: '#222' } } 
+            }
+        }
+    });
+
+    const p = new URLSearchParams(window.location.search);
+    if(p.has('s')) {
+        try {
+            const l = JSON.parse(atob(p.get('s')));
+            document.getElementById('country-select').value = l.c;
+            setThreshold(l.t);
+            document.getElementById('aei-s').value = l.a;
+            document.getElementById('scar-s').value = l.sc;
+            document.getElementById('wealth-s').value = l.w;
+            document.getElementById('mig-s').value = l.m;
+            document.getElementById('conv-s').value = l.v;
+            document.getElementById('debt-s').value = l.d;
+            currentPreset = l.p || 'stable';
+        } catch(e) { console.error("URL State Load Failed", e); }
+    }
+    update();
+}
+init();
+</script>
+</body>
+</html>
