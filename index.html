@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Substrate Succession Engine v6.9.1</title>
-    
+    <title>Dual-Substrate Population Explorer v6.9.1</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
     <style>
         :root { --danger: #FF3333; --warning: #FFFF00; --safe: #00FF88; --successor: #FF9900; --bg: #000000; --panel: #111; --text: #FFFFFF; --accent: #00FFFF; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; font-size: 14px; }
@@ -22,10 +20,10 @@
         input[type=range]::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--accent), var(--danger)); height: 8px; border-radius: 5px; }
         input[type=range]::-webkit-slider-thumb { height: 18px; width: 10px; background: #FFF; cursor: pointer; -webkit-appearance: none; margin-top: -5px; }
         .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
-        .t-btn { flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: #888; cursor: pointer; font-weight: 900; font-size: 0.7rem; }
+        .t-btn { flex: 1; padding: 10px; background: #222; border: 1px solid #444; color: #888; cursor: pointer; font-weight: 900; font-size: 0.7rem; border-radius: 4px; }
         .t-btn.active { border-color: var(--safe); color: var(--safe); background: #051a05; }
-        .s-btn { background: #111; border: 1px solid #333; color: #aaa; padding: 10px; font-size: 0.7rem; cursor: pointer; font-weight: bold; border-radius: 4px; }
-        .s-btn.active-preset { border-color: var(--accent); background: #002222; color: #fff; }
+        .s-btn { background: #111; border: 1px solid #333; color: #aaa; padding: 10px; font-size: 0.7rem; cursor: pointer; font-weight: bold; border-radius: 4px; margin: 2px; }
+        .s-btn.active-preset { border-color: var(--accent); background: #002222; color: #fff; box-shadow: 0 0 10px rgba(0,255,255,0.2); }
         #toast { visibility: hidden; min-width: 250px; background-color: var(--accent); color: #000; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; border: 2px solid #fff; }
         #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
         @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
@@ -92,14 +90,12 @@
                 <div id="gsp-val" style="font-size:3rem; font-weight:900;">--%</div>
             </div>
         </div>
-
         <div style="height: 440px; margin-top: 20px;"><canvas id="mainChart"></canvas></div>
-        
         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top:20px;">
             <div class="card" style="text-align:center;">
                 <div class="label">Friction Drag</div>
                 <div id="friction-val" style="font-size:2rem; font-weight:900; color:var(--danger);">0%</div>
-                <div id="exit-status" style="font-size:0.75rem; font-weight:900;">EXIT: NONE</div>
+                <div id="exit-status" style="font-size:0.75rem; font-weight:900; margin-top:5px;">EXIT: NONE</div>
             </div>
             <div class="card">
                 <div class="label">Social Trust</div>
@@ -153,6 +149,7 @@ function applyPreset(type) {
 function update() {
     const sel = document.getElementById('country-select');
     const c = registry[sel.value];
+    // FIX: Show Full Name
     document.getElementById('country-display').innerText = sel.options[sel.selectedIndex].text;
     const i = {
         aei: parseFloat(document.getElementById('aei-s').value),
