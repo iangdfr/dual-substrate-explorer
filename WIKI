@@ -1,0 +1,70 @@
+===============================================================================
+                 WIKI: GETTING STARTED WITH THE SUCCESSION ENGINE
+===============================================================================
+
+Welcome to the Substrate Succession Engine. This guide will help you 
+interpret the gauges and run your first demographic counterfactual.
+
+-------------------------------------------------------------------------------
+1. UNDERSTANDING THE SUBSTRATES
+-------------------------------------------------------------------------------
+The model tracks two distinct population substrates:
+
+A. HERITAGE (Solid Line): 
+   The original population group defined by initial TFR and historical 
+   cohesion metrics.
+B. SUCCESSOR (Dashed Line): 
+   The replacement substrate driven by migration inflows and higher 
+   initial TFR, which eventually converges to the host's Axiological 
+   Exhaustion levels.
+
+-------------------------------------------------------------------------------
+2. THE PERSISTENCE FLOOR (PSI)
+-------------------------------------------------------------------------------
+You can toggle between two mathematical philosophies:
+
+- 2.1 (Linear/Deterministic): 
+  The standard replacement level. Assumes a perfectly efficient 
+  population distribution.
+- 2.7 (Stochastic): 
+  Accounts for the Galton-Watson probability of extinction. This 
+  is the "extinction floor" for sub-groups with high variance in 
+  offspring counts.
+
+-------------------------------------------------------------------------------
+3. INTERPRETING THE GAUGES
+-------------------------------------------------------------------------------
+- FRICTION DRAG: 
+  Represents the social and economic cost of non-convergence. If this 
+  exceeds 4.5%, the "Institutional Exit" flag is triggered.
+  
+- SOCIAL TRUST: 
+  A proxy for civilizational cohesion. Rapid substrate transition 
+  combined with low convergence (Lambda) will cause this meter to drop, 
+  increasing Friction Drag.
+
+- COMPLEXITY: 
+  Represents the ability of the state to maintain high-level systems 
+  (infrastructure, advanced law, R&D). High debt and low trust 
+  starve this metric.
+
+-------------------------------------------------------------------------------
+4. HOW TO EXPORT AND DISCUSS
+-------------------------------------------------------------------------------
+The Engine is built for "Scenario Sharing":
+
+1. Adjust the sliders to match a real-world trend (e.g., Italy's current 
+   debt + TFR).
+2. Click "Share Configuration."
+3. Paste the URL into GitHub Issues, Discord, or X (Twitter) to 
+   discuss the long-term G8 outcomes.
+   
+-------------------------------------------------------------------------------
+5. MODDING THE REGISTRY
+-------------------------------------------------------------------------------
+To add a new country or update 2026 data:
+1. Open index.html in a text editor.
+2. Locate the "const registry" object.
+3. Add a new entry following the format:
+   "ISO": { tfr: X.X, mig: X.X, coh: X.X, debt: X }
+===============================================================================
