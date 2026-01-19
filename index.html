@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dual-Substrate Population Explorer v6.9</title>
+    <title>Dual-Substrate Population Explorer v6.9.1</title>
     
     <meta name="description" content="Open-source interactive simulator for long-run population dynamics, fertility, migration, fiscal continuity, and stochastic extinction risk.">
     <meta property="og:title" content="Dual-Substrate Population Explorer">
@@ -66,10 +66,10 @@
 
         <div class="label">Scenario Quick-Load</div>
         <div class="scenario-grid">
-            <button class="s-btn" id="p-collapse" onclick="applyPreset('collapse')" data-preset="collapse">Stochastic Collapse</button>
-            <button class="s-btn" id="p-conv" onclick="applyPreset('convergence')" data-preset="convergence">High Integration</button>
-            <button class="s-btn" id="p-exit" onclick="applyPreset('exit')" data-preset="exit">Institutional Exit</button>
-            <button class="s-btn" id="p-stable" onclick="applyPreset('stable')" data-preset="stable">Continuity</button>
+            <button class="s-btn" id="p-collapse" onclick="applyPreset('collapse')">Stochastic Collapse</button>
+            <button class="s-btn" id="p-convergence" onclick="applyPreset('convergence')">High Integration</button>
+            <button class="s-btn" id="p-exit" onclick="applyPreset('exit')">Institutional Exit</button>
+            <button class="s-btn" id="p-stable" onclick="applyPreset('stable')">Continuity</button>
         </div>
 
         <div class="label">Succession Threshold ($\psi$)</div>
@@ -109,7 +109,7 @@
     <main class="panel">
         <div style="display:flex; justify-content:space-between; align-items:flex-end;">
             <div>
-                <h1 id="country-display" style="margin:0; font-size:3rem; letter-spacing:-2px; line-height:1;">USA</h1>
+                <h1 id="country-display" style="margin:0; font-size:2.8rem; letter-spacing:-2px; line-height:1;">Select Country</h1>
                 <div style="display:flex; align-items:center; margin-top:5px;">
                     <div id="shift-status" style="font-weight:900; text-transform:uppercase; font-size:0.85rem;">STABLE SUBSTRATE</div>
                 </div>
@@ -152,33 +152,31 @@
 </div>
 
 <footer style="text-align:center; color:#444; font-size:0.7rem; margin-top:30px; padding-bottom: 20px;">
-    MIT License | &copy; 2026 Dual-Substrate Explorer | Build v6.9.0-Final
+    MIT License | &copy; 2026 Dual-Substrate Explorer | Build v6.9.1-Polished
 </footer>
 
 <script>
-/** DUAL-SUBSTRATE ENGINE CORE v6.9.0 **/
 let currentThreshold = 2.1;
 let currentPreset = 'stable';
 const registry = {
-    "AUS": { tfr: 1.42, mig: 0.55, coh: 0.70, debt: 45 },
-    "CAN": { tfr: 1.28, mig: 0.80, coh: 0.65, debt: 107 },
-    "CHN": { tfr: 1.00, mig: 0.01, coh: 0.88, debt: 90 },
-    "FRA": { tfr: 1.56, mig: 0.42, coh: 0.69, debt: 112 },
-    "GER": { tfr: 1.45, mig: 0.55, coh: 0.68, debt: 65 },
-    "ISR": { tfr: 2.91, mig: 0.05, coh: 0.89, debt: 62 },
-    "ITA": { tfr: 1.21, mig: 0.40, coh: 0.72, debt: 140 },
-    "JPN": { tfr: 1.25, mig: 0.02, coh: 0.84, debt: 260 },
-    "KOR": { tfr: 0.72, mig: 0.03, coh: 0.45, debt: 55 },
-    "UK":  { tfr: 1.52, mig: 0.52, coh: 0.68, debt: 102 },
-    "USA": { tfr: 1.58, mig: 0.55, coh: 0.72, debt: 125 }
+    "AUS": { name: "Australia", tfr: 1.42, mig: 0.55, coh: 0.70, debt: 45 },
+    "CAN": { name: "Canada", tfr: 1.28, mig: 0.80, coh: 0.65, debt: 107 },
+    "CHN": { name: "China", tfr: 1.00, mig: 0.01, coh: 0.88, debt: 90 },
+    "FRA": { name: "France", tfr: 1.56, mig: 0.42, coh: 0.69, debt: 112 },
+    "GER": { name: "Germany", tfr: 1.45, mig: 0.55, coh: 0.68, debt: 65 },
+    "ISR": { name: "Israel", tfr: 2.91, mig: 0.05, coh: 0.89, debt: 62 },
+    "ITA": { name: "Italy", tfr: 1.21, mig: 0.40, coh: 0.72, debt: 140 },
+    "JPN": { name: "Japan", tfr: 1.25, mig: 0.02, coh: 0.84, debt: 260 },
+    "KOR": { name: "South Korea", tfr: 0.72, mig: 0.03, coh: 0.45, debt: 55 },
+    "UK":  { name: "United Kingdom", tfr: 1.52, mig: 0.52, coh: 0.68, debt: 102 },
+    "USA": { name: "United States", tfr: 1.58, mig: 0.55, coh: 0.72, debt: 125 }
 };
 
 let chart;
 
 function showToast(msg) {
     const x = document.getElementById("toast");
-    x.innerText = msg;
-    x.className = "show";
+    x.innerText = msg; x.className = "show";
     setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
 }
 
@@ -202,6 +200,8 @@ function setThreshold(val) {
 }
 
 function update() {
+    const sel = document.getElementById('country-select');
+    const c = registry[sel.value];
     const i = {
         aei: parseFloat(document.getElementById('aei-s').value),
         scar: parseFloat(document.getElementById('scar-s').value),
@@ -210,17 +210,17 @@ function update() {
         conv: parseFloat(document.getElementById('conv-s').value),
         debt: parseFloat(document.getElementById('debt-s').value)
     };
-    const c = registry[document.getElementById('country-select').value];
 
-    // Accessibility & UI updates
-    Object.keys(i).forEach(k => {
-        const displayVal = (k === 'debt' ? i[k] : Math.round(i[k]*100));
-        document.getElementById(k+'-v').innerText = displayVal + (k === 'debt' ? '%' : '%');
-        document.getElementById(k+'-s').setAttribute('aria-valuenow', displayVal);
-    });
-    
+    // UI & Accessibility
+    document.getElementById('country-display').innerText = sel.options[sel.selectedIndex].text;
     document.querySelectorAll('.s-btn').forEach(b => b.classList.remove('active-preset'));
     if(document.getElementById('p-'+currentPreset)) document.getElementById('p-'+currentPreset).classList.add('active-preset');
+
+    ['aei','scar','wealth','mig','conv','debt'].forEach(k => {
+        const val = document.getElementById(k+'-s').value;
+        document.getElementById(k+'-v').innerText = (k === 'debt' ? val : Math.round(val*100)) + '%';
+        document.getElementById(k+'-s').setAttribute('aria-valuenow', k === 'debt' ? val : Math.round(val*100));
+    });
 
     // Model Logic
     const tAEI = Math.min(1.0, i.aei + (i.scar * 0.4));
@@ -240,19 +240,13 @@ function update() {
     const fDrag = (100 - trust) * 0.15 + (i.debt / 40) + (i.scar * 6) + (i.wealth * 8);
     const comp = Math.max(10, 100 - ( (i.debt/300)*50 + (1-i.conv)*30 ));
 
-    // UI Finalize
-    document.getElementById('country-display').innerText = document.getElementById('country-select').value;
     document.getElementById('gsp-val').innerText = (hP[8] * 100).toFixed(1) + "%";
-    document.getElementById('gsp-val').style.color = hSCI < 1 ? 'var(--danger)' : 'var(--safe)';
     document.getElementById('shift-status').innerText = cross > -1 ? `CROSSOVER: GEN ${cross}` : "STABLE SUBSTRATE";
-    document.getElementById('shift-status').style.color = cross > -1 ? 'var(--danger)' : 'var(--safe)';
     document.getElementById('friction-val').innerText = fDrag.toFixed(1) + "%";
     document.getElementById('exit-status').innerText = fDrag > 4.5 ? "EXIT: ACTIVE" : "EXIT: NONE";
-    document.getElementById('exit-status').style.color = fDrag > 4.5 ? 'var(--danger)' : '#555';
     document.getElementById('trust-fill').style.width = trust + "%";
     document.getElementById('comp-fill').style.width = comp + "%";
     document.getElementById('replace-ratio-label').innerText = (sP[8]/(hP[8]+0.001)).toFixed(1) + "x";
-    document.getElementById('payback-val').innerText = "Horizon: " + (fDrag > 4.5 ? "REDUCED" : "STABLE");
 
     chart.data.datasets[0].data = hP;
     chart.data.datasets[1].data = sP;
@@ -273,7 +267,7 @@ document.getElementById('export-btn').onclick = () => {
         p: currentPreset
     };
     navigator.clipboard.writeText(window.location.origin + window.location.pathname + '?s=' + btoa(JSON.stringify(s)));
-    showToast("SHORT-LINK COPIED");
+    showToast("LINK COPIED TO CLIPBOARD");
 };
 
 document.getElementById('copy-results-btn').onclick = () => {
@@ -287,9 +281,8 @@ document.getElementById('copy-results-btn').onclick = () => {
 };
 
 function init() {
-    console.log("Dual-Substrate Population Explorer v6.9 loaded");
     const sel = document.getElementById('country-select');
-    Object.keys(registry).forEach(k => sel.add(new Option(k, k)));
+    Object.keys(registry).forEach(k => sel.add(new Option(registry[k].name, k)));
     sel.value = "USA";
 
     chart = new Chart(document.getElementById('mainChart').getContext('2d'), {
@@ -304,21 +297,14 @@ function init() {
         },
         options: {
             responsive: true, maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
             plugins: { 
                 legend: { 
                     position: 'top',
                     labels: { color: '#FFF', font: { size: 13, weight: '600' }, boxWidth: 20, padding: 20 } 
-                }, 
-                tooltip: { enabled: true } 
+                }
             },
             scales: { 
-                y: { 
-                    beginAtZero: true,
-                    suggestedMax: 1.5,
-                    ticks: { color: '#666' }, 
-                    grid: { color: '#222' } 
-                }, 
+                y: { beginAtZero: true, suggestedMax: 1.5, ticks: { color: '#666' }, grid: { color: '#222' } },
                 x: { ticks: { color: '#666' }, grid: { color: '#222' } } 
             }
         }
@@ -337,7 +323,7 @@ function init() {
             document.getElementById('conv-s').value = l.v;
             document.getElementById('debt-s').value = l.d;
             currentPreset = l.p || 'stable';
-        } catch(e) { console.error("URL State Load Failed", e); }
+        } catch(e) {}
     }
     update();
 }
